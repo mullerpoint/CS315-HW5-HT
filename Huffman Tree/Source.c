@@ -47,17 +47,25 @@ typedef struct Stack_Item
 //structure type definition for a heap
 typedef struct Heap
 {
+	int inserted;
 	HT_ITEM* HT_Ptrs[MAX_HEAP];
 }HEAP;
 
 //Function Prototypes
+//Huffman Tree Functions
 int newHTNode(char, int, HEAP*); //creates a HT Node and inserts it into the heap
-int insertToHeap(HT_ITEM*, HEAP*); //insert a HT Node into the heap
-int buildHT(/*heap*/); //builds the HT from the nodes stored in the heap
-int combineNodes(HT_ITEM**, HT_ITEM**); //build trees from the nodes provided
+HT_ITEM* buildHT(HEAP*); //builds the HT from the nodes stored in the heap
+HT_ITEM* combineNodes(HT_ITEM*, HT_ITEM*); //build trees from the nodes provided
 int preorderTrav(HT_ITEM*); //preorder traverse the HT
 int inorderTrav(HT_ITEM*); //inorder traverse the HT
 //int tabulateHT(HT_ITEM*); //build the table for HT Code
+
+//Heap Functions
+int heapInsert(HT_ITEM*, HEAP*); //insert a HT Node into the heap
+int heapBubbleUp(HEAP*);
+HT_ITEM* heapExtractMin(HEAP*);
+int heapSinkDown(HEAP*, int);
+int heapSwap(int, int, HEAP*);
 
 //Stack Functions
 int push(STACK_ITEM**, HT_ITEM*); //push HT node onto Stack
@@ -78,12 +86,16 @@ main()
 	HT_ITEM *ptrToHT_A = NULL;
 
 	//Heap declaration
-	HEAP heap_A;
+	HEAP* heap_A;
+	heap_A = malloc(sizeof(HEAP));
+	
+	//use the 0th item for a count of the number of inserted items
+	heap_A->inserted = 0;
 
 	//loop for program body
 	while ((entered != '$') && (count <= MAX_HEAP))
 	{
-		//query user for input on next input and normalize input
+		//query user for input on next input
 		printf("Enter a character (enter a '$' to quit entering characters): ");
 		scanf(" %c", &entered);
 
@@ -93,12 +105,12 @@ main()
 			// ensure there are no negative frequencies
 			do
 			{
-				printf("\tEnter '%d's frequency: ", entered);
+				printf("\tEnter '%c's frequency: ", entered);
 				scanf(" %d", &frequency);
 			} while (frequency < 0); 
 			
 			//build the HT node with the character and frequency provided
-			newHTNode(entered, frequency, &heap_A);
+			newHTNode(entered, frequency, heap_A);
 
 
 			//reset inputs and increase count
@@ -110,7 +122,7 @@ main()
 	}//while
 
 	//build the HT
-	buildHT();
+	buildHT(heap_A);
 
 	//Print out the traversals to the user
 	inorderTrav(ptrToHT_A);
@@ -123,7 +135,13 @@ main()
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+//
 // Functions
+//
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Huffman Tree Functions
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 //creates a HT Node and inserts it into the heap
@@ -142,34 +160,51 @@ int newHTNode(char input, int freq, HEAP* heapToUse)
 	
 
 	//put newNode into the heap
-	insertToHeap(newNode, heapToUse);
+	heapInsert(newNode, heapToUse);
 	
 	//return Success
 	return 1;
 }
 
-//insert a HT Node into the heap
-int insertToHeap(HT_ITEM* inputnode, HEAP* heapToUse)
-{
-	//STUB
-	printf("STUB");
-	return 1;
-}
-
 //builds the HT from the nodes stored in the heap
-int buildHT(/*heap*/)
+HT_ITEM* buildHT(HEAP* heapToUse)
 {
-	//STUB
-	printf("STUB");
-	return 1;
+	//while there is more than 1 HT node in the heap keep combining them
+	while (heapToUse->inserted != 1)
+	{
+		//get the two smallest nodes in the heap
+		HT_ITEM *tempNode_A, *tempNode_B, *newNode;
+		tempNode_A = heapExtractMin(heapToUse);
+		tempNode_B = heapExtractMin(heapToUse);
+
+		//combine the two smallest nodes
+		newNode = combineNodes(tempNode_A, tempNode_B);
+
+		//insert the new node into the heap again
+		heapInsert(newNode, heapToUse);
+	}
+	
+	//return the final HT
+	return heapExtractMin(heapToUse);
+
 }
 
 //build trees from the nodes provided
-int combineNodes(HT_ITEM** rootNode, HT_ITEM** lNode) 
+HT_ITEM* combineNodes(HT_ITEM* rItem, HT_ITEM* lItem)
 {
-	//STUB
-	printf("STUB");
-	return 1;
+	//create a new HT
+	HT_ITEM * newHTNode;
+	newHTNode = malloc(sizeof(HT_ITEM));
+
+	//build the node
+	newHTNode->frequency = (rItem->frequency) + (lItem->frequency);
+	newHTNode->keyValue = '-';
+	newHTNode->lNode = lItem;
+	newHTNode->rNode = rItem;
+
+	//return the newly create node
+
+	return newHTNode;
 }
 
 //preorder traverse the HT
@@ -277,6 +312,140 @@ int inorderTrav(HT_ITEM* root)
 //	return 1;
 //}
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Heap Functions
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+//insert a HT Node into the heap
+int heapInsert(HT_ITEM* inputnode, HEAP* heapToUse)
+{
+	//store the number of inserted items in a count
+	int count = heapToUse->inserted;
+
+
+	//if the heap is empty
+	if (count == 0)
+	{
+		//add new node
+		heapToUse->HT_Ptrs[count + 1] = inputnode;
+		//increase count
+		heapToUse->inserted = (count + 1);
+	}
+	else //the heap is not empty
+	{
+		//add new node
+		heapToUse->HT_Ptrs[count + 1] = inputnode;
+		//increase count
+		heapToUse->inserted = (count + 1);
+		//sort nodes
+		heapBubbleUp(heapToUse);
+	}
+
+	//increase count
+	heapToUse->inserted = (count+1);
+	
+	//return success
+	return 1;
+}
+
+
+//perform a heap bubble up for the last item inserted
+int heapBubbleUp(HEAP* heapToUse)
+{
+	int curPos = heapToUse->inserted;
+
+	//while the current position is not 0 and the parent is greater than the current node
+	while ((curPos > 1) && (((heapToUse->HT_Ptrs[curPos / 2])->frequency)>((heapToUse->HT_Ptrs[curPos])->frequency)))
+	{
+		//swap the child and parent nodes
+		heapSwap(curPos, curPos / 2, heapToUse);
+		
+		//set curPos to the parent of the current node
+		curPos = curPos / 2;
+	}//while
+
+	//return success
+	return 1;
+
+}//heapBubbleUp
+
+//extract the Min (root) node from the heap
+HT_ITEM* heapExtractMin(HEAP* heapToUse)
+{
+	//save the number of items in a variable
+	int curPos = heapToUse->inserted;
+
+	//get the smallest item
+	HT_ITEM* min = heapToUse->HT_Ptrs[1];
+
+	//get a node to replace the one we just took
+	heapToUse->HT_Ptrs[1] = heapToUse->HT_Ptrs[curPos - 1];
+
+	//reduce the heap size by 1
+	heapToUse->inserted = (curPos--);
+
+	//Sink Down the root
+	heapSinkDown(heapToUse, 1);
+
+	//return the min node
+	return min;
+
+}
+
+//extract the Min (root) node from the heap
+int heapSinkDown(HEAP* heapToUse, int sinkingNode)
+{
+	//save the sinking node to a temp variable
+	HT_ITEM* tempHTPtr = (heapToUse->HT_Ptrs[sinkingNode]);
+
+	//create a variable for the smallest node out of the two that will be compared
+	int smallestNode = sinkingNode;
+
+	//if the node in the left child is smaller than parent change the smallest variable
+	if ((2 * sinkingNode < (heapToUse->inserted)) && 
+		(((heapToUse->HT_Ptrs[smallestNode])->frequency)>((heapToUse->HT_Ptrs[2 * sinkingNode])->frequency)))
+	{
+		smallestNode = 2 * sinkingNode;
+	}
+	//if the node in the right child is smaller than parent change the smallest variable
+	else if ((((2 * sinkingNode) + 1) < (heapToUse->inserted)) &&
+		(((heapToUse->HT_Ptrs[smallestNode])->frequency)>((heapToUse->HT_Ptrs[(2 * sinkingNode) + 1])->frequency)))
+	{
+		smallestNode = (2 * sinkingNode)+1;
+	}
+
+
+	//if we found a smaller node swap the two (smallest/sinkingNode) and call heapSinkDown on the smallest node
+	if (smallestNode != sinkingNode)
+	{
+		//do the swap
+		heapSwap(smallestNode, sinkingNode, heapToUse);
+
+		//call heapSinkDown again
+		heapSinkDown(heapToUse, smallestNode);
+	}
+
+	//return success
+	return 1;
+
+}
+
+//swap the nodes in positions a and b
+int heapSwap(int posA, int posB, HEAP* heapToUse)
+{
+	//save the node at posA
+	HT_ITEM* tempHTPtr = heapToUse->HT_Ptrs[posA];
+
+	//make the current node at posA the same as the node at posB
+	heapToUse->HT_Ptrs[posA] = heapToUse->HT_Ptrs[posB];
+
+	//make the node at posB the same as the saved node (posA)
+	heapToUse->HT_Ptrs[posB] = tempHTPtr;
+
+	//return success
+	return 1;
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Stack Functions
