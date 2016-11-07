@@ -122,10 +122,13 @@ main()
 	}//while
 
 	//build the HT
-	buildHT(heap_A);
+	ptrToHT_A = buildHT(heap_A);
 
 	//Print out the traversals to the user
+	
+	printf("\n\nThe nodes of the Huffman tree in In-order are:\n\n");
 	inorderTrav(ptrToHT_A);
+	printf("\n\nand in Pre-order are:\n\n");
 	preorderTrav(ptrToHT_A);
 
 	////tabulate the HT
@@ -228,7 +231,8 @@ int preorderTrav(HT_ITEM* root)
 		while (currentRoot != NULL)
 		{
 			//print root
-			printf("%c ", currentRoot->keyValue);
+			printf("%c\t", currentRoot->keyValue);
+			printf("%d\n", currentRoot->frequency);
 
 			//push root to stack
 			push(&stackPtr, currentRoot);
@@ -286,7 +290,8 @@ int inorderTrav(HT_ITEM* root)
 				//backtrack
 				currentRoot = pop(&stackPtr);
 				//visit root
-				printf("%c ", currentRoot->keyValue);
+				printf("%c\t", currentRoot->keyValue);
+				printf("%d\n", currentRoot->frequency);
 
 				//begin right traversal
 				currentRoot = currentRoot->rNode;
@@ -380,10 +385,13 @@ HT_ITEM* heapExtractMin(HEAP* heapToUse)
 	HT_ITEM* min = heapToUse->HT_Ptrs[1];
 
 	//get a node to replace the one we just took
-	heapToUse->HT_Ptrs[1] = heapToUse->HT_Ptrs[curPos - 1];
+	heapToUse->HT_Ptrs[1] = heapToUse->HT_Ptrs[curPos];
+
+	//clear the location where the old node was
+	heapToUse->HT_Ptrs[curPos] = heapToUse->HT_Ptrs[0];
 
 	//reduce the heap size by 1
-	heapToUse->inserted = (curPos--);
+	heapToUse->inserted = (curPos-1);
 
 	//Sink Down the root
 	heapSinkDown(heapToUse, 1);
