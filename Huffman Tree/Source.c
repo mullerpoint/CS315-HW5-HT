@@ -329,27 +329,13 @@ int heapInsert(HT_ITEM* inputnode, HEAP* heapToUse)
 	//store the number of inserted items in a count
 	int count = heapToUse->inserted;
 
+	//add new node
+	heapToUse->HT_Ptrs[count + 1] = inputnode;
+	//increase count
+	heapToUse->inserted = (count + 1);
+	//sort nodes
+	heapBubbleUp(heapToUse);
 
-	//if the heap is empty
-	if (count == 0)
-	{
-		//add new node
-		heapToUse->HT_Ptrs[count + 1] = inputnode;
-		//increase count
-		heapToUse->inserted = (count + 1);
-	}
-	else //the heap is not empty
-	{
-		//add new node
-		heapToUse->HT_Ptrs[count + 1] = inputnode;
-		//increase count
-		heapToUse->inserted = (count + 1);
-		//sort nodes
-		heapBubbleUp(heapToUse);
-	}
-
-	////increase count
-	//heapToUse->inserted = (count+1);
 
 	//return success
 	return 1;
@@ -362,7 +348,7 @@ int heapBubbleUp(HEAP* heapToUse)
 	int curPos = heapToUse->inserted;
 
 	//while the current position is not 0 and the parent is greater than the current node
-	while ((curPos > 1) && (((heapToUse->HT_Ptrs[(curPos / 2)])->frequency) > ((heapToUse->HT_Ptrs[curPos])->frequency)))
+	while ((curPos > 1) && (((heapToUse->HT_Ptrs[curPos])->frequency)) <= ((heapToUse->HT_Ptrs[(curPos / 2)])->frequency))
 	{
 		//swap the child and parent nodes
 		heapSwap(curPos, (curPos / 2), heapToUse);
@@ -397,6 +383,7 @@ HT_ITEM* heapExtractMin(HEAP* heapToUse)
 	//Sink Down the root
 	heapSinkDown(heapToUse, 1);
 
+
 	//return the min node
 	return min;
 
@@ -405,51 +392,35 @@ HT_ITEM* heapExtractMin(HEAP* heapToUse)
 //extract the Min (root) node from the heap
 int heapSinkDown(HEAP* heapToUse, int sinkingNode)
 {
-	//create a loop control variable
-	bool done = false;
+	//variable declarations
+	int bigger = sinkingNode;
+	int smaller;
 
-	while (!done)
+	//loop to sink bigger down
+	while ((2*bigger) <= (heapToUse->inserted))
 	{
-		//save the sinking node to a temp variable
-		HT_ITEM* tempHTPtr = (heapToUse->HT_Ptrs[sinkingNode]);
+		//get biggers left child
+		smaller = 2 * bigger;
 
-		//create a variable for the smallest node out of the two that will be compared
-		int smallestNode = sinkingNode;
-
-		//if the node in the left child is smaller than parent change the smallest variable
-		if ((2 * sinkingNode < (heapToUse->inserted)) &&
-			(((heapToUse->HT_Ptrs[smallestNode])->frequency) >= ((heapToUse->HT_Ptrs[2 * sinkingNode])->frequency)))
+		//if the left child exists and is larger than the right  
+		if (smaller < (heapToUse->inserted) && (((heapToUse->HT_Ptrs[smaller])->frequency) >((heapToUse->HT_Ptrs[smaller + 1])->frequency)))
 		{
-			smallestNode = 2 * sinkingNode;
-		}//if
+			smaller++; //then use the right child
+		}
 
-		//if the node in the right child is smaller than parent change the smallest variable
-		else if ((((2 * sinkingNode) + 1) < (heapToUse->inserted)) &&
-			(((heapToUse->HT_Ptrs[smallestNode])->frequency) >= ((heapToUse->HT_Ptrs[(2 * sinkingNode) + 1])->frequency)))
+		//if the parent is less than the child 
+		if (((heapToUse->HT_Ptrs[bigger])->frequency) <((heapToUse->HT_Ptrs[smaller])->frequency))
 		{
-			smallestNode = (2 * sinkingNode) + 1;
-		}//elseif
+			return 1; //then were done
+		}
 
+		//swap the two nodes to restore balance to the pair
+		heapSwap(bigger, smaller, heapToUse);
 
-
-		//if we found a smaller node swap the two (smallest/sinkingNode) and call heapSinkDown on the smallest node
-		if (smallestNode != sinkingNode)
-		{
-			//do the swap
-			heapSwap(smallestNode, sinkingNode, heapToUse);
-
-			//call heapSinkDown again
-			heapSinkDown(heapToUse, smallestNode);
-		}//if
-		//if we didnt find a smaller node then were done
-		else
-		{
-			done = true;
-		}//else
-	}//while
-	//return success
-	return 1;
-
+		//repeat process with child node
+		bigger = smaller;
+	}
+	return 0;
 }
 
 //swap the nodes in positions a and b
