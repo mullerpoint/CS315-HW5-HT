@@ -82,13 +82,14 @@ main()
 	int frequency = -1;
 	int count = 0;
 
+
 	//Huffman Tree Declaration
 	HT_ITEM *ptrToHT_A = NULL;
 
 	//Heap declaration
 	HEAP* heap_A;
 	heap_A = malloc(sizeof(HEAP));
-	
+
 	//use the 0th item for a count of the number of inserted items
 	heap_A->inserted = 0;
 
@@ -107,8 +108,8 @@ main()
 			{
 				printf("\tEnter '%c's frequency: ", entered);
 				scanf(" %d", &frequency);
-			} while (frequency < 0); 
-			
+			} while (frequency < 0);
+
 			//build the HT node with the character and frequency provided
 			newHTNode(entered, frequency, heap_A);
 
@@ -125,7 +126,7 @@ main()
 	ptrToHT_A = buildHT(heap_A);
 
 	//Print out the traversals to the user
-	
+
 	printf("\n\nThe nodes of the Huffman tree in In-order are:\n\n");
 	inorderTrav(ptrToHT_A);
 	printf("\n\nand in Pre-order are:\n\n");
@@ -160,11 +161,11 @@ int newHTNode(char input, int freq, HEAP* heapToUse)
 	newNode->keyValue = input;
 	newNode->lNode = NULL;
 	newNode->rNode = NULL;
-	
+
 
 	//put newNode into the heap
 	heapInsert(newNode, heapToUse);
-	
+
 	//return Success
 	return 1;
 }
@@ -186,7 +187,7 @@ HT_ITEM* buildHT(HEAP* heapToUse)
 		//insert the new node into the heap again
 		heapInsert(newNode, heapToUse);
 	}
-	
+
 	//return the final HT
 	return heapExtractMin(heapToUse);
 
@@ -347,9 +348,9 @@ int heapInsert(HT_ITEM* inputnode, HEAP* heapToUse)
 		heapBubbleUp(heapToUse);
 	}
 
-	//increase count
-	heapToUse->inserted = (count+1);
-	
+	////increase count
+	//heapToUse->inserted = (count+1);
+
 	//return success
 	return 1;
 }
@@ -361,13 +362,13 @@ int heapBubbleUp(HEAP* heapToUse)
 	int curPos = heapToUse->inserted;
 
 	//while the current position is not 0 and the parent is greater than the current node
-	while ((curPos > 1) && (((heapToUse->HT_Ptrs[curPos / 2])->frequency)>((heapToUse->HT_Ptrs[curPos])->frequency)))
+	while ((curPos > 1) && (((heapToUse->HT_Ptrs[(curPos / 2)])->frequency) > ((heapToUse->HT_Ptrs[curPos])->frequency)))
 	{
 		//swap the child and parent nodes
-		heapSwap(curPos, curPos / 2, heapToUse);
-		
+		heapSwap(curPos, (curPos / 2), heapToUse);
+
 		//set curPos to the parent of the current node
-		curPos = curPos / 2;
+		curPos = (curPos / 2);
 	}//while
 
 	//return success
@@ -391,7 +392,7 @@ HT_ITEM* heapExtractMin(HEAP* heapToUse)
 	heapToUse->HT_Ptrs[curPos] = heapToUse->HT_Ptrs[0];
 
 	//reduce the heap size by 1
-	heapToUse->inserted = (curPos-1);
+	heapToUse->inserted = (curPos - 1);
 
 	//Sink Down the root
 	heapSinkDown(heapToUse, 1);
@@ -404,36 +405,48 @@ HT_ITEM* heapExtractMin(HEAP* heapToUse)
 //extract the Min (root) node from the heap
 int heapSinkDown(HEAP* heapToUse, int sinkingNode)
 {
-	//save the sinking node to a temp variable
-	HT_ITEM* tempHTPtr = (heapToUse->HT_Ptrs[sinkingNode]);
+	//create a loop control variable
+	bool done = false;
 
-	//create a variable for the smallest node out of the two that will be compared
-	int smallestNode = sinkingNode;
-
-	//if the node in the left child is smaller than parent change the smallest variable
-	if ((2 * sinkingNode < (heapToUse->inserted)) && 
-		(((heapToUse->HT_Ptrs[smallestNode])->frequency)>((heapToUse->HT_Ptrs[2 * sinkingNode])->frequency)))
+	while (!done)
 	{
-		smallestNode = 2 * sinkingNode;
-	}
-	//if the node in the right child is smaller than parent change the smallest variable
-	else if ((((2 * sinkingNode) + 1) < (heapToUse->inserted)) &&
-		(((heapToUse->HT_Ptrs[smallestNode])->frequency)>((heapToUse->HT_Ptrs[(2 * sinkingNode) + 1])->frequency)))
-	{
-		smallestNode = (2 * sinkingNode)+1;
-	}
+		//save the sinking node to a temp variable
+		HT_ITEM* tempHTPtr = (heapToUse->HT_Ptrs[sinkingNode]);
+
+		//create a variable for the smallest node out of the two that will be compared
+		int smallestNode = sinkingNode;
+
+		//if the node in the left child is smaller than parent change the smallest variable
+		if ((2 * sinkingNode < (heapToUse->inserted)) &&
+			(((heapToUse->HT_Ptrs[smallestNode])->frequency) >= ((heapToUse->HT_Ptrs[2 * sinkingNode])->frequency)))
+		{
+			smallestNode = 2 * sinkingNode;
+		}//if
+
+		//if the node in the right child is smaller than parent change the smallest variable
+		else if ((((2 * sinkingNode) + 1) < (heapToUse->inserted)) &&
+			(((heapToUse->HT_Ptrs[smallestNode])->frequency) >= ((heapToUse->HT_Ptrs[(2 * sinkingNode) + 1])->frequency)))
+		{
+			smallestNode = (2 * sinkingNode) + 1;
+		}//elseif
 
 
-	//if we found a smaller node swap the two (smallest/sinkingNode) and call heapSinkDown on the smallest node
-	if (smallestNode != sinkingNode)
-	{
-		//do the swap
-		heapSwap(smallestNode, sinkingNode, heapToUse);
 
-		//call heapSinkDown again
-		heapSinkDown(heapToUse, smallestNode);
-	}
+		//if we found a smaller node swap the two (smallest/sinkingNode) and call heapSinkDown on the smallest node
+		if (smallestNode != sinkingNode)
+		{
+			//do the swap
+			heapSwap(smallestNode, sinkingNode, heapToUse);
 
+			//call heapSinkDown again
+			heapSinkDown(heapToUse, smallestNode);
+		}//if
+		//if we didnt find a smaller node then were done
+		else
+		{
+			done = true;
+		}//else
+	}//while
 	//return success
 	return 1;
 
